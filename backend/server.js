@@ -76,10 +76,8 @@ app.post('/api/users/register', async (req, res) => {
   }
 });
 
-// Start server
+// Add this to your server.js:
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {  // Add '0.0.0.0'
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📡 API: http://localhost:${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
