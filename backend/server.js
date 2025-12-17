@@ -5,21 +5,38 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
+// ✅ CORS Configuration - UPDATED WITH YOUR VERCEL URL
+const allowedOrigins = [
+  'http://localhost:3000',  // Local development
+  'https://video-platform-frontend-kohl.vercel.app',  // Your EXACT Vercel URL
+  'https://video-platform-frontend-kohl.vercel.app/'  // With trailing slash too
+];
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',  // Local development
-    'https://your-netlify-site.netlify.app'  // Your future frontend URL
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin is in the allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Otherwise, block the request
+    const msg = 'CORS policy: This site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
+  },
   credentials: true
 }));
 
-// Database Connection - SIMPLIFIED VERSION
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/videoplatform')
-.then(() => console.log('✅ MongoDB Connected Successfully!'))
-.catch(err => console.error('❌ MongoDB Connection Error:', err));
+app.use(express.json());
 
-// Define a simple User Schema (we'll expand this later)
+// Database Connection
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/videoplatform')
+  .then(() => console.log('✅ MongoDB Connected Successfully!'))
+  .catch(err => console.error('❌ MongoDB Connection Error:', err));
+
+// Define a simple User Schema
 const userSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
@@ -51,6 +68,15 @@ app.get('/api/test', (req, res) => {
   });
 });
 
+// Health check endpoint for Render
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    uptime: process.uptime()
+  });
+});
+
 // User Registration Route
 app.post('/api/users/register', async (req, res) => {
   try {
@@ -76,8 +102,10 @@ app.post('/api/users/register', async (req, res) => {
   }
 });
 
-// Add this to your server.js:
+// Start server - IMPORTANT FOR RENDER
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {  // Add '0.0.0.0'
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 API: http://localhost:${PORT}`);
+  console.log(`🌍 CORS Allowed: ${allowedOrigins.join(', ')}`);
 });
