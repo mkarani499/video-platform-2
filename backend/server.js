@@ -3,6 +3,11 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
+// Import routes and models
+const paymentRoutes = require('./routes/paymentRoutes');
+const Video = require('./models/Video');
+const User = require('./models/User');
+
 const app = express();
 
 // ✅ CORS Configuration - UPDATED WITH YOUR VERCEL URL
@@ -36,16 +41,6 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/videoplat
   .then(() => console.log('✅ MongoDB Connected Successfully!'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// Define a simple User Schema
-const userSchema = new mongoose.Schema({
-  name: String,
-  email: { type: String, unique: true },
-  password: String,
-  createdAt: { type: Date, default: Date.now }
-});
-
-const User = mongoose.model('User', userSchema);
-
 // Routes
 app.get('/', (req, res) => {
   res.json({ 
@@ -54,7 +49,9 @@ app.get('/', (req, res) => {
     endpoints: [
       '/api/test',
       '/api/users/register',
-      '/api/users/login'
+      '/api/users/login',
+      '/api/videos',
+      '/api/payments/initiate'
     ]
   });
 });
@@ -102,10 +99,52 @@ app.post('/api/users/register', async (req, res) => {
   }
 });
 
+// Sample video creation route (for testing)
+app.post('/api/videos/create-sample', async (req, res) => {
+  try {
+    const video = new Video({
+      title: 'Sample Tutorial Video',
+      description: 'Learn how to integrate M-Pesa payments',
+      price: 50,
+      url: 'https://example.com/sample-video.mp4',
+      thumbnail: 'https://example.com/thumbnail.jpg',
+      duration: 300,
+      isPublic: true
+    });
+    
+    await video.save();
+    res.json({ 
+      success: true, 
+      message: 'Sample video created',
+      video: {
+        id: video._id,
+        title: video.title,
+        price: video.price
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get all videos
+app.get('/api/videos', async (req, res) => {
+  try {
+    const videos = await Video.find({ isPublic: true });
+    res.json(videos);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Use payment routes
+app.use('/api/payments', paymentRoutes);
+
 // Start server - IMPORTANT FOR RENDER
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 API: http://localhost:${PORT}`);
   console.log(`🌍 CORS Allowed: ${allowedOrigins.join(', ')}`);
+  console.log(`💰 M-Pesa Integration: ${process.env.MPESA_CONSUMER_KEY ? 'Ready' : 'Not configured'}`);
 });
