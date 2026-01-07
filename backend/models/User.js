@@ -1,5 +1,3 @@
-# Create User model
-@"
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
@@ -10,4 +8,3 @@ const userSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('User', userSchema);
-"@ | Out-File -FilePath "models\User.js" -Encoding utf8

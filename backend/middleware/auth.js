@@ -1,5 +1,3 @@
-# Create auth middleware
-@"
 // Simple authentication middleware
 module.exports = (req, res, next) => {
   // For now, use a simple user ID from headers
@@ -7,4 +5,3 @@ module.exports = (req, res, next) => {
   req.userId = req.headers['user-id'] || 'test-user-id';
   next();
 };
-"@ | Out-File -FilePath "middleware\auth.js" -Encoding utf8

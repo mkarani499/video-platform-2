@@ -1,5 +1,3 @@
-# Create Video model
-@"
 const mongoose = require('mongoose');
 
 const videoSchema = new mongoose.Schema({
@@ -14,4 +12,3 @@ const videoSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('Video', videoSchema);
-"@ | Out-File -FilePath "models\Video.js" -Encoding utf8
