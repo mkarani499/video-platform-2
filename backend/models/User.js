@@ -1,0 +1,13 @@
+# Create User model
+@"
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: { type: String, unique: true },
+  password: String,
+  createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model('User', userSchema);
+"@ | Out-File -FilePath "models\User.js" -Encoding utf8
