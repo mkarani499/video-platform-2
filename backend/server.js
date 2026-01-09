@@ -1,3 +1,5 @@
+const authRoutes = require('./routes/authRoutes');
+const authMiddleware = require('./middleware/auth');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -35,6 +37,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use('/api/auth', authRoutes);
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/videoplatform')
@@ -138,7 +141,7 @@ app.get('/api/videos', async (req, res) => {
 });
 
 // Use payment routes
-app.use('/api/payments', paymentRoutes);
+app.use('/api/payments', authMiddleware, paymentRoutes);
 
 // Start server - IMPORTANT FOR RENDER
 const PORT = process.env.PORT || 5000;

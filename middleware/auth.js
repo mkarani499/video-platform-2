@@ -1,7 +1,20 @@
-// Simple authentication middleware (you'll enhance this later)
-module.exports = (req, res, next) => {
-  // For now, we'll use a simple user ID from headers
-  // Later replace with JWT token authentication
-  req.userId = req.headers['user-id'] || 'test-user-id';
-  next();
+const jwt = require('jsonwebtoken');
+
+const auth = async (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      throw new Error();
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.userId;
+    req.token = token;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Please authenticate' });
+  }
 };
+
+module.exports = auth;
