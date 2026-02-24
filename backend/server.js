@@ -12,11 +12,13 @@ const User = require('./models/User');
 
 const app = express();
 
-// ✅ CORS Configuration - UPDATED WITH YOUR VERCEL URL
+// ✅ CORS Configuration - Updated with ALL frontend URLs
 const allowedOrigins = [
-  'http://localhost:3000',  // Local development
-  'https://video-platform-frontend-kohl.vercel.app',  // Your EXACT Vercel URL
-  'https://video-platform-frontend-kohl.vercel.app/'  // With trailing slash too
+  'http://localhost:3000',
+  'https://video-platform-frontend-kohl.vercel.app',
+  'https://video-platform-frontend-kohl.vercel.app/',
+  'https://gilded-hotteok-a702b4.netlify.app/',  // Replace with YOUR URL
+  'https://gilded-hotteok-a702b4.netlify.app//'  // With trailing slash
 ];
 
 app.use(cors({
