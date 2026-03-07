@@ -22,6 +22,9 @@ const userSchema = new mongoose.Schema({
     ref: 'Video' 
   }],
   createdAt: { type: Date, default: Date.now }
+}, {
+  // Add this to ensure methods are properly attached
+  strict: true
 });
 
 // Hash password before saving
@@ -37,9 +40,29 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// Compare password method
+// Compare password method - ENSURE THIS IS DEFINED BEFORE MODEL CREATION
 userSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+  try {
+    console.log('🔍 comparePassword called'); // Debug log
+    const isMatch = await bcrypt.compare(candidatePassword, this.password);
+    console.log('Password match:', isMatch); // Debug log
+    return isMatch;
+  } catch (error) {
+    console.error('Compare error:', error);
+    throw error;
+  }
 };
 
-module.exports = mongoose.model('User', userSchema);
+// Add a test method to verify schema methods are working
+userSchema.methods.test = function() {
+  console.log('✅ Schema methods are working');
+  return true;
+};
+
+// Create the model
+const User = mongoose.model('User', userSchema);
+
+// Log to confirm methods are attached
+console.log('✅ User model loaded. Methods:', Object.keys(User.schema.methods));
+
+module.exports = User;

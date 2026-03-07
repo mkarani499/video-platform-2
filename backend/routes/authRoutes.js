@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const auth = require('../middleware/auth');
+const bcrypt = require('bcryptjs'); // Add this import
 
 // Register user
 router.post('/register', async (req, res) => {
@@ -43,21 +44,45 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('🔍 Login attempt for:', email);
 
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
+      console.log('❌ User not found');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Check password
-    const isPasswordValid = await user.comparePassword(password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    console.log('✅ User found');
+    
+    // Try using the schema method first
+    try {
+      if (typeof user.comparePassword === 'function') {
+        console.log('Using comparePassword method');
+        const isValid = await user.comparePassword(password);
+        console.log('Result:', isValid);
+        
+        if (!isValid) {
+          return res.status(401).json({ error: 'Invalid credentials' });
+        }
+      } else {
+        // Fallback to direct bcrypt
+        console.log('comparePassword not found, using direct bcrypt');
+        const isValid = await bcrypt.compare(password, user.password);
+        console.log('Direct bcrypt result:', isValid);
+        
+        if (!isValid) {
+          return res.status(401).json({ error: 'Invalid credentials' });
+        }
+      }
+    } catch (compareError) {
+      console.error('Password comparison error:', compareError);
+      return res.status(500).json({ error: 'Password comparison failed' });
     }
 
     // Generate token
     const token = generateToken(user._id);
+    console.log('✅ Login successful');
 
     res.json({
       success: true,
@@ -72,7 +97,7 @@ router.post('/login', async (req, res) => {
       token
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('❌ Login error:', error);
     res.status(500).json({ error: 'Login failed' });
   }
 });
