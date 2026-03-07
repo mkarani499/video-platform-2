@@ -40,44 +40,62 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login user
+// Login user - UPDATED VERSION
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     console.log('🔍 Login attempt for:', email);
 
-    // Find user
+    // Find user WITHOUT using lean() to ensure methods are attached
     const user = await User.findOne({ email });
+    
     if (!user) {
       console.log('❌ User not found');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    console.log('✅ User found');
+    console.log('✅ User found:', user.email);
+    console.log('User constructor:', user.constructor.name);
+    console.log('Available methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(user)));
+    console.log('comparePassword exists:', typeof user.comparePassword);
     
-    // Try using the schema method first
-    try {
-      if (typeof user.comparePassword === 'function') {
-        console.log('Using comparePassword method');
-        const isValid = await user.comparePassword(password);
-        console.log('Result:', isValid);
-        
-        if (!isValid) {
-          return res.status(401).json({ error: 'Invalid credentials' });
-        }
-      } else {
-        // Fallback to direct bcrypt
-        console.log('comparePassword not found, using direct bcrypt');
-        const isValid = await bcrypt.compare(password, user.password);
-        console.log('Direct bcrypt result:', isValid);
-        
-        if (!isValid) {
-          return res.status(401).json({ error: 'Invalid credentials' });
-        }
+    // Check if comparePassword exists
+    if (typeof user.comparePassword !== 'function') {
+      console.log('⚠️ comparePassword not found, using direct bcrypt');
+      
+      // Try direct bcrypt
+      const isValid = await bcrypt.compare(password, user.password);
+      console.log('Direct bcrypt result:', isValid);
+      
+      if (!isValid) {
+        return res.status(401).json({ error: 'Invalid credentials' });
       }
-    } catch (compareError) {
-      console.error('Password comparison error:', compareError);
-      return res.status(500).json({ error: 'Password comparison failed' });
+      
+      // Generate token
+      const token = generateToken(user._id);
+      console.log('✅ Login successful via direct bcrypt');
+      
+      return res.json({
+        success: true,
+        message: 'Login successful',
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          phone: user.phone
+        },
+        token
+      });
+    }
+
+    // Use the schema method
+    console.log('Using comparePassword method');
+    const isValid = await user.comparePassword(password);
+    console.log('Compare result:', isValid);
+    
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Generate token
@@ -98,7 +116,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
+    res.status(500).json({ error: 'Login failed: ' + error.message });
   }
 });
 

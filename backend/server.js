@@ -44,6 +44,18 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/videoplat
   .then(() => console.log('✅ MongoDB Connected Successfully!'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
+// 🔧 FIX 3: Force load models after MongoDB connection
+mongoose.connection.once('open', () => {
+  console.log('✅ MongoDB Connected Successfully! (Event confirmed)');
+  
+  // Force load models
+  require('./models/User');
+  require('./models/Video');
+  require('./models/Payment');
+  
+  console.log('📦 Models loaded');
+});
+
 // Routes
 app.get('/', (req, res) => {
   res.json({ 
