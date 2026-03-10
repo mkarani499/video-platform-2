@@ -7,6 +7,7 @@ require('dotenv').config();
 
 // Import routes and models
 const paymentRoutes = require('./routes/paymentRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');  // ✅ ADD THIS LINE
 const Video = require('./models/Video');
 const User = require('./models/User');
 
@@ -38,6 +39,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use('/api/auth', authRoutes);
+app.use('/api/upload', uploadRoutes);  // ✅ ADD THIS LINE (around line 40-50)
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/videoplatform')
@@ -66,7 +68,8 @@ app.get('/', (req, res) => {
       '/api/users/register',
       '/api/users/login',
       '/api/videos',
-      '/api/payments/initiate'
+      '/api/payments/initiate',
+      '/api/upload'  // Optional: add this to your endpoints list
     ]
   });
 });
