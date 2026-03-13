@@ -4,9 +4,14 @@ const { uploadVideo } = require('../config/cloudinary');
 const Video = require('../models/Video');
 const auth = require('../middleware/auth');
 
-// Upload video with optional thumbnail
+// Upload video with optional thumbnail - DEBUG VERSION
 router.post('/video-with-thumbnail', auth, (req, res, next) => {
-  // Use fields() to handle both video and thumbnail
+  console.log('\n========== NEW UPLOAD REQUEST ==========');
+  console.log('1. Time:', new Date().toISOString());
+  console.log('2. Auth user:', req.userId);
+  console.log('3. Content-Type:', req.headers['content-type']);
+  console.log('4. Body fields present:', Object.keys(req.body));
+  
   const upload = uploadVideo.fields([
     { name: 'video', maxCount: 1 },
     { name: 'thumbnail', maxCount: 1 }
@@ -14,26 +19,52 @@ router.post('/video-with-thumbnail', auth, (req, res, next) => {
   
   upload(req, res, function(err) {
     if (err) {
-      console.error('❌ Upload error:', err);
-      return res.status(400).json({ error: err.message });
+      console.log('5. ❌ MULTER ERROR:', {
+        name: err.name,
+        message: err.message,
+        code: err.code,
+        field: err.field
+      });
+      return res.status(400).json({ 
+        error: 'Upload failed',
+        details: err.message,
+        code: err.code
+      });
     }
+    console.log('5. ✅ Multer processing complete');
     next();
   });
 }, async (req, res) => {
   try {
-    console.log('📥 Upload request received');
+    console.log('6. 🔍 FILES RECEIVED:');
+    console.log('   - req.files keys:', req.files ? Object.keys(req.files) : 'none');
     
+    // Check video
     const videoFile = req.files?.video?.[0];
+    console.log('   - Video file:', videoFile ? '✅ PRESENT' : '❌ MISSING');
+    if (videoFile) {
+      console.log('     Original name:', videoFile.originalname);
+      console.log('     Size:', videoFile.size, 'bytes');
+      console.log('     Mimetype:', videoFile.mimetype);
+      console.log('     Path:', videoFile.path);
+    }
+    
+    // Check thumbnail
     const thumbnailFile = req.files?.thumbnail?.[0];
-    
-    console.log('Video:', videoFile ? '✅' : '❌');
-    console.log('Thumbnail:', thumbnailFile ? '✅' : '❌');
-    
+    console.log('   - Thumbnail file:', thumbnailFile ? '✅ PRESENT' : 'ℹ️ OPTIONAL (not provided)');
+    if (thumbnailFile) {
+      console.log('     Original name:', thumbnailFile.originalname);
+      console.log('     Size:', thumbnailFile.size, 'bytes');
+      console.log('     Mimetype:', thumbnailFile.mimetype);
+      console.log('     Path:', thumbnailFile.path);
+    }
+
     if (!videoFile) {
+      console.log('7. ❌ No video file - aborting');
       return res.status(400).json({ error: 'No video file uploaded' });
     }
 
-    // Create video record
+    console.log('7. ✅ Creating video record');
     const video = new Video({
       title: req.body.title || 'Untitled',
       description: req.body.description || '',
@@ -46,7 +77,9 @@ router.post('/video-with-thumbnail', auth, (req, res, next) => {
     });
 
     await video.save();
-    console.log('✅ Video saved with ID:', video._id);
+    console.log('8. ✅ Video saved with ID:', video._id);
+    console.log('9. ✅ Thumbnail saved:', thumbnailFile ? 'with thumbnail' : 'without thumbnail');
+    console.log('========== REQUEST COMPLETE ==========\n');
 
     res.json({
       success: true,
@@ -60,7 +93,7 @@ router.post('/video-with-thumbnail', auth, (req, res, next) => {
       }
     });
   } catch (error) {
-    console.error('❌ Server error:', error);
+    console.log('❌ SERVER ERROR:', error);
     res.status(500).json({ error: error.message });
   }
 });
