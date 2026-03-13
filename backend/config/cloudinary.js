@@ -26,19 +26,20 @@ const thumbnailStorage = new CloudinaryStorage({
   params: {
     folder: 'video-platform/thumbnails',
     resource_type: 'image',
-    allowed_formats: ['jpg', 'png', 'jpeg'],
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
     transformation: [{ width: 640, height: 360, crop: 'fill' }]
   }
 });
 
+// Create multer upload middleware
 const uploadVideo = multer({ 
   storage: videoStorage,
-  limits: { fileSize: 100 * 1024 * 1024 }
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB
 });
 
 const uploadThumbnail = multer({ 
   storage: thumbnailStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
 });
 
 module.exports = {
