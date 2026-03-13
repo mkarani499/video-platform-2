@@ -4,9 +4,10 @@ const videoSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: String,
   price: { type: Number, required: true, default: 50 },
-  url: { type: String },
+  url: { type: String, required: true },  // Added required: true
   thumbnail: String,
-  duration: Number,
+  duration: { type: Number, default: 0 }, // Added default: 0
+  uploader: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Added uploader field
   isPublic: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
 });
