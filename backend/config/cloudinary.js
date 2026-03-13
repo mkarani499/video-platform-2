@@ -20,13 +20,13 @@ const videoStorage = new CloudinaryStorage({
   }
 });
 
-// Configure storage for thumbnails
+// Configure storage for thumbnails - FIXED VERSION
 const thumbnailStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'video-platform/thumbnails',
     resource_type: 'image',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'JPG', 'JPEG'], // Include uppercase too
     transformation: [{ width: 640, height: 360, crop: 'fill' }]
   }
 });
@@ -42,8 +42,18 @@ const uploadThumbnail = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB
 });
 
+// Add debug middleware to log what's being uploaded
+const debugUpload = (req, res, next) => {
+  console.log('📤 Upload request received:');
+  console.log('Headers:', req.headers['content-type']);
+  console.log('Body fields:', req.body);
+  console.log('Files:', req.file);
+  next();
+};
+
 module.exports = {
   cloudinary,
   uploadVideo,
-  uploadThumbnail
+  uploadThumbnail,
+  debugUpload
 };
