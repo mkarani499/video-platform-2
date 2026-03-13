@@ -20,14 +20,32 @@ const videoStorage = new CloudinaryStorage({
   }
 });
 
-// Configure storage for thumbnails - FIXED VERSION
+// Configure storage for thumbnails - FLEXIBLE VERSION
 const thumbnailStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'video-platform/thumbnails',
-    resource_type: 'image',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'JPG', 'JPEG'], // Include uppercase too
-    transformation: [{ width: 640, height: 360, crop: 'fill' }]
+  params: async (req, file) => {
+    // Log the file being processed
+    console.log('🖼️ Processing thumbnail:', file.originalname);
+    console.log('   MIME type:', file.mimetype);
+    
+    // Accept any image format
+    const allowedFormats = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff'];
+    
+    // Get file extension and convert to lowercase
+    const extension = file.originalname.split('.').pop().toLowerCase();
+    
+    // Use original format if supported, otherwise default to jpg
+    const format = allowedFormats.includes(extension) ? extension : 'jpg';
+    
+    console.log('   Detected format:', extension);
+    console.log('   Using format:', format);
+    
+    return {
+      folder: 'video-platform/thumbnails',
+      resource_type: 'image',
+      format: format,
+      transformation: [{ width: 640, height: 360, crop: 'fill' }]
+    };
   }
 });
 
@@ -42,18 +60,8 @@ const uploadThumbnail = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB
 });
 
-// Add debug middleware to log what's being uploaded
-const debugUpload = (req, res, next) => {
-  console.log('📤 Upload request received:');
-  console.log('Headers:', req.headers['content-type']);
-  console.log('Body fields:', req.body);
-  console.log('Files:', req.file);
-  next();
-};
-
 module.exports = {
   cloudinary,
   uploadVideo,
-  uploadThumbnail,
-  debugUpload
+  uploadThumbnail
 };
