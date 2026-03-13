@@ -20,32 +20,14 @@ const videoStorage = new CloudinaryStorage({
   }
 });
 
-// Configure storage for thumbnails - FLEXIBLE VERSION
+// Configure storage for thumbnails - NO RESTRICTIONS (testing only)
 const thumbnailStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: async (req, file) => {
-    // Log the file being processed
-    console.log('🖼️ Processing thumbnail:', file.originalname);
-    console.log('   MIME type:', file.mimetype);
-    
-    // Accept any image format
-    const allowedFormats = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff'];
-    
-    // Get file extension and convert to lowercase
-    const extension = file.originalname.split('.').pop().toLowerCase();
-    
-    // Use original format if supported, otherwise default to jpg
-    const format = allowedFormats.includes(extension) ? extension : 'jpg';
-    
-    console.log('   Detected format:', extension);
-    console.log('   Using format:', format);
-    
-    return {
-      folder: 'video-platform/thumbnails',
-      resource_type: 'image',
-      format: format,
-      transformation: [{ width: 640, height: 360, crop: 'fill' }]
-    };
+  params: {
+    folder: 'video-platform/thumbnails',
+    resource_type: 'image',
+    // allowed_formats removed for testing
+    transformation: [{ width: 640, height: 360, crop: 'fill' }]
   }
 });
 
