@@ -16,10 +16,7 @@ const videoStorage = new CloudinaryStorage({
     folder: 'video-platform/videos',
     resource_type: 'video',
     allowed_formats: ['mp4', 'mov', 'avi', 'mkv', 'webm'],
-    max_file_size: 100 * 1024 * 1024, // 100MB
-    transformation: [
-      { quality: 'auto', fetch_format: 'auto' } // Optimize for web
-    ]
+    transformation: [{ quality: 'auto', fetch_format: 'auto' }]
   }
 });
 
@@ -30,21 +27,18 @@ const thumbnailStorage = new CloudinaryStorage({
     folder: 'video-platform/thumbnails',
     resource_type: 'image',
     allowed_formats: ['jpg', 'png', 'jpeg'],
-    transformation: [
-      { width: 640, height: 360, crop: 'fill' } // 16:9 thumbnail
-    ]
+    transformation: [{ width: 640, height: 360, crop: 'fill' }]
   }
 });
 
-// Create multer upload middleware
 const uploadVideo = multer({ 
   storage: videoStorage,
-  limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit
+  limits: { fileSize: 100 * 1024 * 1024 }
 });
 
 const uploadThumbnail = multer({ 
   storage: thumbnailStorage,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 }
 });
 
 module.exports = {
