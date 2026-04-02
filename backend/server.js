@@ -7,30 +7,25 @@ require('dotenv').config();
 
 // Import routes and models
 const paymentRoutes = require('./routes/paymentRoutes');
-const uploadRoutes = require('./routes/uploadRoutes');  // ✅ ADD THIS LINE
+const uploadRoutes = require('./routes/uploadRoutes');
 const Video = require('./models/Video');
 const User = require('./models/User');
 
 const app = express();
 
-// ✅ CORS Configuration - UPDATED WITH YOUR VERCEL URL
+// ✅ CORS Configuration
 const allowedOrigins = [
-  'http://localhost:3000',  // Local development
-  'https://video-platform-frontend-kohl.vercel.app',  // Your EXACT Vercel URL
-  'https://video-platform-frontend-kohl.vercel.app/'  // With trailing slash too
+  'http://localhost:3000',
+  'https://video-platform-frontend-kohl.vercel.app',
+  'https://video-platform-frontend-kohl.vercel.app/'
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
-    // Check if the origin is in the allowed list
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    
-    // Otherwise, block the request
     const msg = 'CORS policy: This site does not allow access from the specified Origin.';
     return callback(new Error(msg), false);
   },
@@ -39,18 +34,20 @@ app.use(cors({
 
 app.use(express.json());
 app.use('/api/auth', authRoutes);
-app.use('/api/upload', uploadRoutes);  // ✅ ADD THIS LINE (around line 40-50)
+app.use('/api/upload', uploadRoutes);
 
-// Database Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/videoplatform')
-  .then(() => console.log('✅ MongoDB Connected Successfully!'))
-  .catch(err => console.error('❌ MongoDB Connection Error:', err));
+// Database Connection - UPDATED WITH TIMEOUT OPTIONS
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/videoplatform', {
+  serverSelectionTimeoutMS: 30000,  // 30 seconds instead of 10
+  connectTimeoutMS: 30000
+})
+.then(() => console.log('✅ MongoDB Connected Successfully!'))
+.catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// 🔧 FIX 3: Force load models after MongoDB connection
+// Force load models after MongoDB connection
 mongoose.connection.once('open', () => {
   console.log('✅ MongoDB Connected Successfully! (Event confirmed)');
   
-  // Force load models
   require('./models/User');
   require('./models/Video');
   require('./models/Payment');
@@ -69,7 +66,7 @@ app.get('/', (req, res) => {
       '/api/users/login',
       '/api/videos',
       '/api/payments/initiate',
-      '/api/upload'  // Optional: add this to your endpoints list
+      '/api/upload'
     ]
   });
 });
@@ -83,7 +80,6 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-// Health check endpoint for Render
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
@@ -92,21 +88,15 @@ app.get('/health', (req, res) => {
   });
 });
 
-// User Registration Route
 app.post('/api/users/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    
-    // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ error: 'User already exists' });
     }
-    
-    // Create new user (in production, hash password!)
     const user = new User({ name, email, password });
     await user.save();
-    
     res.json({ 
       success: true, 
       message: 'User registered successfully',
@@ -117,7 +107,6 @@ app.post('/api/users/register', async (req, res) => {
   }
 });
 
-// Sample video creation route (for testing)
 app.post('/api/videos/create-sample', async (req, res) => {
   try {
     const video = new Video({
@@ -129,7 +118,6 @@ app.post('/api/videos/create-sample', async (req, res) => {
       duration: 300,
       isPublic: true
     });
-    
     await video.save();
     res.json({ 
       success: true, 
@@ -145,7 +133,6 @@ app.post('/api/videos/create-sample', async (req, res) => {
   }
 });
 
-// Get all videos
 app.get('/api/videos', async (req, res) => {
   try {
     const videos = await Video.find({ isPublic: true });
@@ -155,10 +142,8 @@ app.get('/api/videos', async (req, res) => {
   }
 });
 
-// Use payment routes
 app.use('/api/payments', authMiddleware, paymentRoutes);
 
-// Start server - IMPORTANT FOR RENDER
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
