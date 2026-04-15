@@ -4,21 +4,25 @@ const { uploadVideo, uploadThumbnail } = require('../config/cloudinary');
 const Video = require('../models/Video');
 const auth = require('../middleware/auth');
 
-// Upload video with thumbnail - SIMPLIFIED
+// Upload video with thumbnail - FIXED (using fields instead of multiple .single)
 router.post('/video-with-thumbnail', auth, 
-  uploadVideo.single('video'),
-  uploadThumbnail.single('thumbnail'),
+  uploadVideo.fields([
+    { name: 'video', maxCount: 1 },
+    { name: 'thumbnail', maxCount: 1 }
+  ]),
   async (req, res) => {
     try {
       console.log('📥 Upload received');
-      console.log('Video file:', req.file ? '✅' : '❌');
-      console.log('Thumbnail file:', req.files ? '✅' : '❌');
+      console.log('Files object:', req.files);
       
-      const videoFile = req.file;
+      const videoFile = req.files?.video?.[0];
       const thumbnailFile = req.files?.thumbnail?.[0];
       
+      console.log('Video file:', videoFile ? '✅' : '❌');
+      console.log('Thumbnail file:', thumbnailFile ? '✅' : '❌');
+      
       if (!videoFile) {
-        return res.status(400).json({ error: 'No video file' });
+        return res.status(400).json({ error: 'No video file uploaded' });
       }
 
       const video = new Video({
@@ -34,16 +38,29 @@ router.post('/video-with-thumbnail', auth,
 
       await video.save();
       
+      console.log('✅ Video saved:', video._id);
+      
       res.json({
         success: true,
-        message: 'Video uploaded!',
-        video: { id: video._id, title: video.title, url: video.url, thumbnail: video.thumbnail }
+        message: 'Video uploaded successfully!',
+        video: { 
+          id: video._id, 
+          title: video.title, 
+          url: video.url, 
+          thumbnail: video.thumbnail,
+          duration: video.duration
+        }
       });
     } catch (error) {
-      console.error('❌ Error:', error);
+      console.error('❌ Upload error:', error);
       res.status(500).json({ error: error.message });
     }
   }
 );
+
+// Test endpoint to verify route is working
+router.get('/test', (req, res) => {
+  res.json({ message: 'Upload route is working!' });
+});
 
 module.exports = router;
